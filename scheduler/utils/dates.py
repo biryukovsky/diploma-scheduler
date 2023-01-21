@@ -1,0 +1,1 @@
+HOUR_IN_SECS = 3600
