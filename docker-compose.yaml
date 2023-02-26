@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  web:
+    container_name: scheduler
+    build:
+      context: .
+    env_file:
+      - .env
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+    networks:
+      - scheduler
+
+  db:
+    image: postgres:14
+    container_name: scheduler-db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=db
+      - POSTGRES_USER=db
+      - POSTGRES_PASSWORD=db
+    volumes:
+      - scheduler-db:/var/lib/postgresql/data
+      - ./initdb/scheduler_schema.sql:/docker-entrypoint-initdb.d/1-scheduler_schema.sql
+    networks:
+      - scheduler
+
+networks:
+  scheduler:
+    name: scheduler
+    driver: bridge
+
+volumes:
+  scheduler-db:

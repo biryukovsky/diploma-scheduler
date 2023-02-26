@@ -3,7 +3,7 @@ from pydantic import BaseSettings, Field
 
 class DatabaseSettings(BaseSettings):
     user: str = Field(env="DB_USER")
-    password: str = Field(env="DB_PORT")
+    password: str = Field(env="DB_PASSWORD")
     host: str = Field(env="DB_HOST")
     port: str = Field(env="DB_PORT")
     db_name: str = Field(env="DB_NAME")
