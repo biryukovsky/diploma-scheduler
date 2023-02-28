@@ -1,18 +1,21 @@
-class JobNotFound(Exception):
+from scheduler.utils.exception import SchedulerException
+
+
+class JobNotFound(SchedulerException):
     def __init__(self, job_id, *args: object) -> None:
         self.job_id = job_id
-        super().__init__(*args)
+        super().__init__(f"Job `{self.job_id}` not found")
 
 
-class UnknownJobFunction(ValueError):
+class UnknownJobFunction(SchedulerException):
     def __init__(self, job_name: str, *args: object) -> None:
         self.job_name = job_name
-        super().__init__(*args)
+        super().__init__(f"Unknown function: `{self.job_name}`")
 
 
-class SchedulerAlreadyRunning(Exception):
+class SchedulerAlreadyRunning(SchedulerException):
     ...
 
 
-class SchedulerStopped(Exception):
+class SchedulerStopped(SchedulerException):
     ...
