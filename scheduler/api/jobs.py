@@ -1,32 +1,46 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from dependency_injector.wiring import inject, Provide
 
 from scheduler.modules.scheduler.services import SchedulerManager
+from scheduler.modules.scheduler.schemas import JobIn, JobOut
 
 
 router = APIRouter(tags=["jobs"])
 
 
-@router.get("/")  # TODO: schema
+@router.get("/", response_model=list[JobOut])
 @inject
 async def get_jobs(scheduler_manager: SchedulerManager = Depends(Provide["scheduler_manager"])):
     jobs = scheduler_manager.get_jobs()
-    print(jobs)
+    return list(map(JobOut.parse_obj, jobs))
 
 
-@router.get("/{job_id}")
+@router.get("/{job_id}", response_model=JobOut)
 @inject
-async def get_job(job_id):
-    ...
+async def get_job(
+    job_id: str,
+    scheduler_manager: SchedulerManager = Depends(Provide["scheduler_manager"])
+):
+    job = scheduler_manager.get_job(job_id)
+    return JobOut.parse_obj(job)
 
 
-@router.post("/")
+@router.post("/", response_model=JobOut)
 @inject
-async def add_job():
-    ...
+async def add_job(
+    job_in: JobIn,
+    scheduler_manager: SchedulerManager = Depends(Provide["scheduler_manager"])
+):
+    job = scheduler_manager.add_job(
+        job_name=job_in.job_name,
+        trigger=job_in.job_trigger.to_apscheduler_trigger(),
+        **job_in.args,
+    )
+    return JobOut.parse_obj(job)
 
 
-@router.delete("/{job_id}")
+@router.delete("/{job_id}", response_class=Response)
 @inject
-async def delete_job(job_id):
-    ...
+async def delete_job(job_id, scheduler_manager: SchedulerManager = Depends(Provide["scheduler_manager"])):
+    scheduler_manager.delete_job(job_id)
+    return Response()

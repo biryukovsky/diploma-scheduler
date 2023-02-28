@@ -30,7 +30,7 @@ class SchedulerManager:
         self.scheduler_table = scheduler_table
         self._running = False
 
-    def get_jobs(self):
+    def get_jobs(self) -> list[Job]:
         return self.scheduler.get_jobs()
 
     def get_job(self, job_id) -> Job:
