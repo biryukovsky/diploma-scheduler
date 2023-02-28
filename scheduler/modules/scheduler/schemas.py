@@ -48,3 +48,6 @@ class JobOut(BaseModel):
     id: str
     name: str
     next_run_time: dt.datetime
+
+    class Config:
+        orm_mode = True

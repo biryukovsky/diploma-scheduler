@@ -12,7 +12,7 @@ router = APIRouter(tags=["jobs"])
 @inject
 async def get_jobs(scheduler_manager: SchedulerManager = Depends(Provide["scheduler_manager"])):
     jobs = scheduler_manager.get_jobs()
-    return list(map(JobOut.parse_obj, jobs))
+    return list(map(JobOut.from_orm, jobs))
 
 
 @router.get("/{job_id}", response_model=JobOut)
@@ -22,7 +22,7 @@ async def get_job(
     scheduler_manager: SchedulerManager = Depends(Provide["scheduler_manager"])
 ):
     job = scheduler_manager.get_job(job_id)
-    return JobOut.parse_obj(job)
+    return JobOut.from_orm(job)
 
 
 @router.post("/", response_model=JobOut)
@@ -36,7 +36,7 @@ async def add_job(
         trigger=job_in.job_trigger.to_apscheduler_trigger(),
         **job_in.args,
     )
-    return JobOut.parse_obj(job)
+    return JobOut.from_orm(job)
 
 
 @router.delete("/{job_id}", response_class=Response)
