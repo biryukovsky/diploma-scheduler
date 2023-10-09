@@ -1,30 +1,31 @@
 import typing as t
 import datetime as dt
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, conint
 from apscheduler.triggers.date import DateTrigger
-from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.cron import CronTrigger  # noqa
 from apscheduler.triggers.interval import IntervalTrigger
 
 
 class DateJobTrigger(BaseModel):
     trigger_name: t.Literal["date"]
+
     run_date: dt.datetime
 
     def to_apscheduler_trigger(self,) -> DateTrigger:
         return DateTrigger(run_date=self.run_date)
 
 
-# TODO: conint >= 0
 class IntervalJobTrigger(BaseModel):
     trigger_name: t.Literal["interval"]
-    weeks: int = 0
-    days: int = 0
-    hours: int = 0
-    minutes: int = 0
-    seconds: int = 0
-    start_date: dt.datetime = None
-    end_date: dt.datetime = None
+
+    weeks: conint(ge=0) = 0
+    days: conint(ge=0) = 0
+    hours: conint(ge=0) = 0
+    minutes: conint(ge=0) = 0
+    seconds: conint(ge=0) = 0
+    start_date: dt.datetime | None = None
+    end_date: dt.datetime | None = None
 
     def to_apscheduler_trigger(self) -> IntervalTrigger:
         return IntervalTrigger(

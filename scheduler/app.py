@@ -3,7 +3,8 @@ from fastapi.responses import JSONResponse
 
 import scheduler
 from scheduler.containers import Container
-from scheduler.api.jobs import router as jobs_router
+from scheduler.api.router import router as api_router
+from scheduler.web.views import router as web_router
 from scheduler.config import Settings
 from scheduler.utils.exception import SchedulerException
 
@@ -18,7 +19,8 @@ def create_app():
     app.container = container
     app.container.wire(packages=[scheduler])
 
-    app.include_router(jobs_router, prefix="/jobs")
+    app.include_router(api_router)
+    app.include_router(web_router)
 
     @app.exception_handler(SchedulerException)
     async def handle_app_exception(request: Request, exc: SchedulerException):

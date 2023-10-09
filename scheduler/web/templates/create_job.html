@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Новая задача{% endblock %}
+
+{% block content %}
+<div class="row my-1">
+  <h1>Новая задача</h1>
+</div>
+<div class="row my-1">
+  <a href="/"><button type="button" class="btn btn-primary">Назад</button></a>
+</div>
+<div class="row">
+  <form method="POST" action="/create">
+    <div class="mb-3">
+      <label for="jobName">Название</label>
+      {# TODO: селект вместо инпута, получать в контексте названия задач #}
+      <input type="text" name="name" id="jobName" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label for="nextRunTime">Время запуска</label>
+      <input type="datetime-local" name="next_run_time" id="nextRunTime" class="form-control">
+    </div>
+    <button type="submit" class="btn btn-primary">Создать</button>
+  </form>
+</div>
+{% endblock %}
