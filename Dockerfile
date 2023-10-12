@@ -16,6 +16,7 @@ RUN pip install --upgrade pip \
     && pip install --user -r requirements.txt
 
 COPY scheduler scheduler
+COPY alembic alembic
 
 EXPOSE 8000
 
