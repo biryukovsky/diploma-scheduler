@@ -20,9 +20,17 @@ class SchedulerSettings(BaseSettings):
         env_file = ".env"
 
 
+class SecuritySettings(BaseSettings):
+    secret_key: str = Field(env="SECRET_KEY")
+
+    class Config:
+        env_file = ".env"
+
+
 class Settings(BaseSettings):
     db: DatabaseSettings = DatabaseSettings()
     scheduler: SchedulerSettings = SchedulerSettings()
+    security: SecuritySettings = SecuritySettings()
 
     class Config:
         env_file = ".env"

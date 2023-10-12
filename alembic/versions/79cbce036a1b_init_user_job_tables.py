@@ -1,8 +1,8 @@
 """init: user, job tables
 
-Revision ID: c826f7e27e48
+Revision ID: 79cbce036a1b
 Revises: 
-Create Date: 2023-10-12 20:37:39.861465
+Create Date: 2023-10-13 00:11:28.305758
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'c826f7e27e48'
+revision: str = '79cbce036a1b'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -26,7 +26,8 @@ def upgrade() -> None:
     sa.Column('password', sa.Text(), nullable=False),
     sa.Column('first_name', sa.Text(), nullable=True),
     sa.Column('last_name', sa.Text(), nullable=True),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('login')
     )
     op.create_table('job',
     sa.Column('id', postgresql.UUID(), server_default=sa.text('uuid_generate_v4()'), nullable=False),

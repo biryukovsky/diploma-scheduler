@@ -10,7 +10,7 @@ class User(Base):
     __tablename__ = "user"
 
     id = sa.Column(PG_UUID, primary_key=True, server_default=sa.text("uuid_generate_v4()"))
-    login = sa.Column(sa.Text, nullable=False)
+    login = sa.Column(sa.Text, nullable=False, unique=True)
     password = sa.Column(sa.Text, nullable=False)
     first_name = sa.Column(sa.Text, nullable=True)
     last_name = sa.Column(sa.Text, nullable=True)

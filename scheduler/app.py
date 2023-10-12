@@ -1,5 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from starlette.middleware import Middleware
+from starlette.middleware.sessions import SessionMiddleware
 
 import scheduler
 from scheduler.containers import Container
@@ -15,7 +17,11 @@ def create_app():
 
     scheduler_manager = container.scheduler_manager()
 
-    app = FastAPI()
+    app = FastAPI(
+        middleware=[
+            Middleware(SessionMiddleware, secret_key=container.config.secret_key())
+        ]
+    )
     app.container = container
     app.container.wire(packages=[scheduler])
 
