@@ -8,6 +8,22 @@
 </head>
 <body>
   <div class="page">
+    {% with messages = get_flashed_messages(request) %}
+      {% if messages %}
+        <div class="toast-container position-absolute top-0 end-0 p-3" style="z-index: 11;">
+          {% for message in messages %}
+                <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                  <div class="d-flex">
+                    <div class="toast-body">
+                      <span>{{ message.message }}</span>
+                    </div>
+                    <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                  </div>
+                </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
       <div class="container">
         <div class="navbar-nav ms-auto justify-content-end">
@@ -27,6 +43,6 @@
       {% block content %}{% endblock %}
     </div>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

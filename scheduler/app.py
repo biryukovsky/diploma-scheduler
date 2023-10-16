@@ -7,6 +7,7 @@ import scheduler
 from scheduler.containers import Container
 from scheduler.api.router import router as api_router
 from scheduler.web.views import router as web_router
+from scheduler.web.exception_handlers import apply_exception_handlers as apply_web_exception_handlers
 from scheduler.config import Settings
 from scheduler.utils.exception import SchedulerException
 
@@ -27,6 +28,8 @@ def create_app():
 
     app.include_router(api_router)
     app.include_router(web_router)
+
+    apply_web_exception_handlers(app)
 
     @app.exception_handler(SchedulerException)
     async def handle_app_exception(request: Request, exc: SchedulerException):

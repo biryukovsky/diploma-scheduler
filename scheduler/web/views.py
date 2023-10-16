@@ -12,6 +12,8 @@ from passlib.context import CryptContext
 
 from scheduler.db import Database
 from scheduler.models import User
+from scheduler.web.dependencies.auth import auth_required
+from scheduler.web.utils.flash import get_flashed_messages
 
 
 template_dir = pathlib.Path(__file__).parent / "templates"
@@ -33,6 +35,7 @@ templates = Jinja2Templates(directory=template_dir,
                             context_processors=[
                                 user_context,
                             ])
+templates.env.globals['get_flashed_messages'] = get_flashed_messages
 
 
 @router.get("/register", response_class=HTMLResponse)
@@ -158,13 +161,15 @@ async def render_index_page(request: Request):
     })
 
 
-@router.get("/create", response_class=HTMLResponse)
+@router.get("/create",
+            response_class=HTMLResponse,
+            dependencies=[Depends(auth_required)])
 async def render_create_job_page(request: Request):
     return templates.TemplateResponse("create_job.html", context={
         "request": request,
     })
 
 
-@router.post("/create")
+@router.post("/create", dependencies=[Depends(auth_required)])
 async def create_job():
     return RedirectResponse("/", status_code=302)
