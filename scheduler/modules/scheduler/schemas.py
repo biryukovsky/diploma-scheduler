@@ -1,10 +1,11 @@
 import typing as t
 import datetime as dt
 
-from pydantic import BaseModel, Field, conint
+from pydantic import BaseModel, Field, conint, validator
 from apscheduler.triggers.date import DateTrigger
 from apscheduler.triggers.cron import CronTrigger  # noqa
 from apscheduler.triggers.interval import IntervalTrigger
+from scheduler.modules.scheduler.job_registry import JOB_REGISTRY
 
 
 class DateJobTrigger(BaseModel):
@@ -40,9 +41,15 @@ class IntervalJobTrigger(BaseModel):
 
 
 class JobIn(BaseModel):
-    job_name: str  # TODO: validate by list of possible jobs
+    job_name: str
     job_trigger: DateJobTrigger | IntervalJobTrigger = Field(..., discriminator="trigger_name")
     args: dict | None = Field(default_factory=dict)
+
+    @validator("job_name")
+    def validate_job_name(cls, value):
+        if value not in JOB_REGISTRY:
+            raise ValueError("Unknown job name")
+        return value
 
 
 class JobOut(BaseModel):

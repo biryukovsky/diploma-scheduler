@@ -53,12 +53,12 @@ class SchedulerManager:
         replace_existing: bool | None = False,
         **kwargs
     ) -> Job:
-        job_func = JOB_REGISTRY.get(job_name)
-        if not job_func:
+        job_item = JOB_REGISTRY.get(job_name)
+        if not job_item:
             raise UnknownJobFunction(job_name)
 
         job = self.scheduler.add_job(
-            job_func,
+            job_item["func"],
             trigger,
             name=job_name,
             kwargs=kwargs,

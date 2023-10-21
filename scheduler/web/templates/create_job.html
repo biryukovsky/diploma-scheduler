@@ -12,9 +12,15 @@
 <div class="row">
   <form method="POST" action="/create">
     <div class="mb-3">
-      <label for="jobName">Название</label>
-      {# TODO: селект вместо инпута, получать в контексте названия задач #}
-      <input type="text" name="name" id="jobName" class="form-control">
+      <label for="jobName">Выберите задачу</label>
+      <select class="form-select" name="name" id="jobName" required>
+        {% for job in jobs %}
+          <option value="{{ job.name }}">{{ job.display_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="js-job-params-container">
+
     </div>
     <div class="mb-3">
       <label for="nextRunTime">Время запуска</label>
@@ -23,4 +29,69 @@
     <button type="submit" class="btn btn-primary">Создать</button>
   </form>
 </div>
+{% endblock %}
+
+{% block javascript %}
+<script>
+const loadParams = async () => {
+  const jobName = document.getElementById("jobName").value;
+  const response = await fetch(`/job_params/${jobName}`);
+  const params = await response.json();
+
+  const paramsContainer = document.querySelector(".js-job-params-container");
+
+  params.forEach(param => {
+    createControl(
+      paramsContainer,
+      param.display_name,
+      param.type,
+      param.name,
+    );
+
+    if (param.is_list && paramsContainer.querySelector(".addMore") === null) {
+      const btn = document.createElement("button");
+      btn.textContent = "Добавить еще"
+      btn.classList.add("btn", "btn-link", "addMode", "pt-0", "ps-0");
+      btn.setAttribute("type", "button");
+      btn.onclick = (el, event) => {
+        // destroy button itself
+        paramsContainer.removeChild(btn);
+
+        // create new control
+        createControl(
+          paramsContainer,
+          param.display_name,
+          param.type,
+          param.name
+        );
+
+        // append button to the end
+        paramsContainer.appendChild(btn);
+      }
+      paramsContainer.appendChild(btn);
+    }
+  });
+}
+
+const createControl = (container, displayName, type, name, isList) => {
+  const inputContainer = document.createElement("div");
+  inputContainer.classList.add("mb-3");
+
+  const label = document.createElement("label");
+  label.textContent = displayName;
+  // TODO: add for
+
+  const input = document.createElement("input");
+  input.classList.add("form-control");
+  input.setAttribute("type", type);
+  input.setAttribute("name", name);
+
+  inputContainer.appendChild(label);
+  inputContainer.appendChild(input);
+
+  container.appendChild(inputContainer);
+}
+
+window.addEventListener("load", loadParams);
+</script>
 {% endblock %}

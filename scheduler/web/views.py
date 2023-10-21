@@ -3,6 +3,7 @@ import pathlib
 import typing as t
 
 from fastapi import APIRouter, Form, Request, Depends
+from fastapi.datastructures import FormData
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from dependency_injector.wiring import inject, Provide
@@ -13,7 +14,8 @@ from passlib.context import CryptContext
 from scheduler.db import Database
 from scheduler.models import User
 from scheduler.web.dependencies.auth import auth_required
-from scheduler.web.utils.flash import get_flashed_messages
+from scheduler.web.utils.flash import get_flashed_messages, flash, FlashCategory
+from scheduler.modules.scheduler.job_registry import JOB_REGISTRY, JobName
 
 
 template_dir = pathlib.Path(__file__).parent / "templates"
@@ -64,11 +66,9 @@ async def register(
     - redirect to index
     """
 
-    response = RedirectResponse("/", status_code=302)
-
     if password != password2:
-        print("passwords don't match")
-        return response
+        flash(request, "Пароли не совпадают", FlashCategory.danger)
+        return RedirectResponse("/register")
 
     async with db.session() as session:
         user = User(
@@ -82,21 +82,27 @@ async def register(
             await session.commit()
             await session.refresh(user)
         except IntegrityError as e:
-            print("user exists", e)
-            return response
+            flash(request,
+                  "Такой пользователь уже зарегистрирован",
+                  FlashCategory.danger)
+            return RedirectResponse("/register")
 
     request.session["user"] = {
+        "id": user.id,
         "login": user.login,
         "first_name": user.first_name,
         "last_name": user.last_name,
     }
 
-    return response
+    return RedirectResponse("/", status_code=302)
 
 
 @router.get("/login", response_class=HTMLResponse)
 async def render_login_page(request: Request):
-    # TODO: reject logged in users
+    if "user" in request.session:
+        referer = request.headers.get("Referer", "/")
+        flash(request, "Вы уже вошли в учетную запись")
+        return RedirectResponse(referer, status_code=302)
     return templates.TemplateResponse("login.html", context={
         "request": request,
     })
@@ -117,7 +123,10 @@ async def login_user(
     - redirect to index
     """
 
-    # TODO: reject logged in users
+    if "user" in request.session:
+        referer = request.headers.get("Referer", "/")
+        flash(request, "Вы уже вошли в учетную запись")
+        return RedirectResponse(referer, status_code=302)
 
     async with db.session() as session:
         query = select(User).where(User.login == login)
@@ -165,11 +174,60 @@ async def render_index_page(request: Request):
             response_class=HTMLResponse,
             dependencies=[Depends(auth_required)])
 async def render_create_job_page(request: Request):
+    renderable_jobs = [{
+        "name": k,
+        "display_name": v["display_name"]
+    } for k, v in JOB_REGISTRY.items()]
     return templates.TemplateResponse("create_job.html", context={
         "request": request,
+        "jobs": renderable_jobs,
     })
 
 
 @router.post("/create", dependencies=[Depends(auth_required)])
-async def create_job():
+@inject
+async def create_job(request: Request):
+    form = await request.form()
+
+    # TODO: validate form
+
+    params = parse_create_job_params(form)
+
     return RedirectResponse("/", status_code=302)
+
+
+@router.get("/job_params/{job_name}", dependencies=[Depends(auth_required)])
+async def get_job_params(job_name: JobName):
+    response = []
+    params = JOB_REGISTRY[job_name.value]["params"]
+    type_map = {
+        str: "text",
+        list[str]: "text",
+    }
+    for param in params:
+        param_data = {
+            "name": param["name"],
+            "display_name": param["display_name"],
+            "type": type_map.get(param["type"], "text"),
+            "is_list": "[]" in param["name"],
+        }
+        response.append(param_data)
+
+    return response
+
+
+def parse_create_job_params(form: FormData):
+    data = {}
+    job_name = form.get("name")
+    params = JOB_REGISTRY[job_name]["params"]
+    for param in params:
+        key = param["name"]
+
+        if '[]' in key:
+            value = form.getlist(key)
+        else:
+            value = form[key]
+
+        data[key] = value
+
+    return data
