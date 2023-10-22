@@ -13,11 +13,16 @@
   <form method="POST" action="/create">
     <div class="mb-3">
       <label for="jobName">Выберите задачу</label>
+      {# TODO: перезагружать параметры джобы при смене #}
       <select class="form-select" name="name" id="jobName" required>
         {% for job in jobs %}
           <option value="{{ job.name }}">{{ job.display_name }}</option>
         {% endfor %}
       </select>
+    </div>
+    <div class="mb-3">
+      <label for="description">Описание задачи</label>
+      <input type="text" name="description" id="description" class="form-control">
     </div>
     <div class="js-job-params-container">
 
@@ -33,12 +38,15 @@
 
 {% block javascript %}
 <script>
-const loadParams = async () => {
-  const jobName = document.getElementById("jobName").value;
+// TODO: add preloader
+
+
+const loadParams = async (jobName) => {
   const response = await fetch(`/job_params/${jobName}`);
   const params = await response.json();
 
   const paramsContainer = document.querySelector(".js-job-params-container");
+  paramsContainer.innerHTML = "";
 
   params.forEach(param => {
     createControl(
@@ -62,7 +70,7 @@ const loadParams = async () => {
           paramsContainer,
           param.display_name,
           param.type,
-          param.name
+          param.name,
         );
 
         // append button to the end
@@ -73,13 +81,12 @@ const loadParams = async () => {
   });
 }
 
-const createControl = (container, displayName, type, name, isList) => {
+const createControl = (container, displayName, type, name) => {
   const inputContainer = document.createElement("div");
   inputContainer.classList.add("mb-3");
 
   const label = document.createElement("label");
   label.textContent = displayName;
-  // TODO: add for
 
   const input = document.createElement("input");
   input.classList.add("form-control");
@@ -92,6 +99,10 @@ const createControl = (container, displayName, type, name, isList) => {
   container.appendChild(inputContainer);
 }
 
-window.addEventListener("load", loadParams);
+const jobNameElem = document.getElementById("jobName");
+
+jobNameElem.addEventListener("change", (event) => loadParams(event.target.value));
+
+window.addEventListener("load", () => loadParams(jobNameElem.value));
 </script>
 {% endblock %}
