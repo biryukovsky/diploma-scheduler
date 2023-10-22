@@ -1,6 +1,11 @@
 from fastapi import HTTPException
 
 
+class AlreadyLoggedIn(Exception):
+    def __init__(self, referer: str, *args: object) -> None:
+        self.referer = referer
+
+
 class Unauthorized(HTTPException):
     def __init__(
         self,
