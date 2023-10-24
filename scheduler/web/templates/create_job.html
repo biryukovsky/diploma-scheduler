@@ -13,7 +13,6 @@
   <form method="POST" action="/create">
     <div class="mb-3">
       <label for="jobName">Выберите задачу</label>
-      {# TODO: перезагружать параметры джобы при смене #}
       <select class="form-select" name="name" id="jobName" required>
         {% for job in jobs %}
           <option value="{{ job.name }}">{{ job.display_name }}</option>

@@ -1,2 +1,2 @@
-def notify_students():
-    ...
+def notify_students(*args, **kwargs):
+    print(args, kwargs)

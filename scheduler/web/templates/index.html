@@ -27,7 +27,10 @@
           <td>{{ job.next_run_time.strftime("%d.%m.%Y %H:%M:%S") }}</td>
           <td>{{ job.author }}</td>
           <td>
-            <button type="button" class="btn btn-danger">Удалить</button>
+          {# TODO: confirm #}
+            <form action="/delete-job/{{ job.id }}" method="post">
+              <button type="submit" class="btn btn-danger">Удалить</button>
+            </form>
           </td>
         </tr>
       {% endfor %}

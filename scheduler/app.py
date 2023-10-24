@@ -20,7 +20,8 @@ def create_app():
 
     app = FastAPI(
         middleware=[
-            Middleware(SessionMiddleware, secret_key=container.config.secret_key())
+            Middleware(SessionMiddleware,
+                       secret_key=container.config.security.secret_key())
         ]
     )
     app.container = container

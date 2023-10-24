@@ -1,6 +1,7 @@
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
+from sqlalchemy.orm import relationship
 
 
 Base = declarative_base()
@@ -24,3 +25,6 @@ class Job(Base):
     author_id = sa.Column(PG_UUID, sa.ForeignKey("user.id"), nullable=False)
     # scheduler.job.id reference, alembic refuses to generate foreign key for non-sqla tables
     scheduler_job_id = sa.Column(sa.Text, nullable=False)
+    params = sa.Column(JSONB, nullable=True)
+
+    author = relationship(User, backref="jobs")
