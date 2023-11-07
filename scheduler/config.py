@@ -22,6 +22,9 @@ class SchedulerSettings(BaseSettings):
 
 class SecuritySettings(BaseSettings):
     secret_key: str = Field(env="SECRET_KEY")
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
+    refresh_token_expire_minutes: int = 60 * 24 * 3
 
     class Config:
         env_file = ".env"

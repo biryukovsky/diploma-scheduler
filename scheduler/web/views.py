@@ -10,7 +10,6 @@ from fastapi.templating import Jinja2Templates
 from dependency_injector.wiring import inject, Provide
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from passlib.context import CryptContext
 
 from scheduler.db import Database
 from scheduler.models import User
@@ -22,10 +21,10 @@ from scheduler.web.schemas import CreateJobRequest
 from scheduler.web.dependencies.auth import auth_required, prevent_logged_in
 from scheduler.web.utils.flash import get_flashed_messages, flash, FlashCategory
 from scheduler.web.utils.session import add_user_to_session
+from scheduler.modules.security.security import hash_password, verify_password
 
 
 template_dir = pathlib.Path(__file__).parent / "templates"
-pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def user_context(request: Request) -> dict[str, t.Any]:
@@ -82,7 +81,7 @@ async def register(
     async with db.session() as session:
         user = User(
             login=login,
-            password=pwd_ctx.hash(password),
+            password=hash_password(password),
             first_name=first_name,
             last_name=last_name,
         )
@@ -134,7 +133,7 @@ async def login_user(
             flash(request, "Такого пользоваотеля не существует", FlashCategory.danger)
             return RedirectResponse("/login", status_code=302)
 
-        if not pwd_ctx.verify(password, user.password):
+        if not verify_password(password, user.password):
             flash(request, "Неверный пароль", FlashCategory.danger)
             return RedirectResponse("/login", status_code=302)
 
@@ -296,7 +295,7 @@ def parse_create_job_params(form: FormData):
     for param in params:
         key = param["name"]
 
-        if '[]' in key:
+        if key.endswith("[]"):
             value = form.getlist(key)
             key = key.removesuffix("[]")
         else:
