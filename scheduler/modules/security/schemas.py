@@ -22,8 +22,3 @@ class TokenData(BaseModel):
 class AuthResponse(BaseModel):
     user: DisplayableUserResponse
     token_data: TokenData
-
-
-class LoginRequest(BaseModel):
-    login: str
-    password: str

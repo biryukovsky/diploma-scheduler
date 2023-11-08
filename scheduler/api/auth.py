@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from fastapi.security import OAuth2PasswordRequestForm
 from dependency_injector.wiring import inject, Provide
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -8,7 +9,6 @@ from scheduler.models import User
 from scheduler.modules.security.schemas import (
     RegisterRequest,
     AuthResponse,
-    LoginRequest,
     DisplayableUserResponse,
     TokenData,
 )
@@ -20,6 +20,7 @@ from scheduler.modules.security.exceptions import (
 from scheduler.modules.security.security import (
     create_access_token,
     create_refresh_token,
+    get_user_from_token,
     verify_password,
     hash_password,
 )
@@ -68,19 +69,19 @@ async def register(
     )
 
 
-@router.post("/login", response_model=AuthResponse)
+@router.post("/login", response_model=TokenData)
 @inject
 async def login(
-    login_data: LoginRequest,
+    login_data: OAuth2PasswordRequestForm = Depends(),
     db: Database = Depends(Provide["db"])
 ):
     async with db.session() as session:
-        query = select(User).where(User.login == login_data.login)
+        query = select(User).where(User.login == login_data.username)
         user = (await session.execute(query)).scalar()
         if not user:
             raise UserNotFound(
                 status_code=404,
-                detail=f"Пользователь `{login_data.login}` не существует"
+                detail=f"Пользователь `{login_data.username}` не существует"
             )
 
         if not verify_password(login_data.password, user.password):
@@ -93,14 +94,12 @@ async def login(
     access_token = create_access_token(token_payload)
     refresh_token = create_refresh_token(token_payload)
 
-    return AuthResponse(
-        user=DisplayableUserResponse(
-            login=user.login,
-            first_name=user.first_name,
-            last_name=user.last_name
-        ),
-        token_data=TokenData(
-            access_token=access_token,
-            refresh_token=refresh_token,
-        ),
+    return TokenData(
+        access_token=access_token,
+        refresh_token=refresh_token,
     )
+
+
+@router.get("/me")
+async def get_me(user: DisplayableUserResponse = Depends(get_user_from_token)):
+    return user

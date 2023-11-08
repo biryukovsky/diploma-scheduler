@@ -1,13 +1,23 @@
 import datetime as dt
 
+from sqlalchemy import select
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 from dependency_injector.wiring import inject, Provide
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
 from scheduler.config import SecuritySettings
+from scheduler.db import Database
+from scheduler.models import User
+from scheduler.modules.security.schemas import DisplayableUserResponse
 
 
 pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth_token = OAuth2PasswordBearer(
+    tokenUrl="/api/auth/login",
+    scheme_name="JWT",
+)
 
 
 def hash_password(password: str) -> str:
@@ -42,5 +52,42 @@ def create_refresh_token(
     return encoded_jwt
 
 
-def get_user_from_token(token: str, secret_key: str, algorithm: str):
-    ...
+@inject
+async def get_user_from_token(
+    token: str = Depends(oauth_token),
+    settings: SecuritySettings = Depends(Provide["config.security"]),
+    db: Database = Depends(Provide["db"]),
+) -> DisplayableUserResponse:
+    try:
+        payload = jwt.decode(
+            token,
+            key=settings["secret_key"],
+            algorithms=settings["algorithm"],
+        )
+        if dt.datetime.fromtimestamp(payload["exp"]) < dt.datetime.utcnow():
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token expired",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    async with db.session() as session:
+        user = (await session.execute(select(User).where(User.login == payload["login"]))).scalar()
+
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+            )
+
+        return DisplayableUserResponse(
+            login=user.login,
+            first_name=user.first_name,
+            last_name=user.last_name,
+        )
