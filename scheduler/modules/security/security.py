@@ -52,33 +52,41 @@ def create_refresh_token(
     return encoded_jwt
 
 
+def _raise_unauthorized(message: str):
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail=message,
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
+def _get_token_payload(token: str, secret_key: str, algorithm: str) -> dict:
+    try:
+        payload = jwt.decode(
+            token,
+            key=secret_key,
+            algorithms=algorithm,
+        )
+        if dt.datetime.fromtimestamp(payload["exp"]) < dt.datetime.utcnow():
+            _raise_unauthorized("Token expired")
+        if "sub" not in payload:
+            _raise_unauthorized("Could not validate credentials")
+    except JWTError:
+        _raise_unauthorized("Could not validate credentials")
+
+    return payload
+
+
 @inject
 async def get_user_from_token(
     token: str = Depends(oauth_token),
     settings: SecuritySettings = Depends(Provide["config.security"]),
     db: Database = Depends(Provide["db"]),
 ) -> DisplayableUserResponse:
-    try:
-        payload = jwt.decode(
-            token,
-            key=settings["secret_key"],
-            algorithms=settings["algorithm"],
-        )
-        if dt.datetime.fromtimestamp(payload["exp"]) < dt.datetime.utcnow():
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Token expired",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-    except JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    payload = _get_token_payload(token, settings["secret_key"], settings["algorithm"])
 
     async with db.session() as session:
-        user = (await session.execute(select(User).where(User.login == payload["login"]))).scalar()
+        user = (await session.execute(select(User).where(User.login == payload["sub"]))).scalar()
 
         if user is None:
             raise HTTPException(

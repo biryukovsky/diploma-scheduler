@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from scheduler.db import Database
 from scheduler.models import User
 from scheduler.modules.security.schemas import (
+    AccessTokenResponse,
     RegisterRequest,
     AuthResponse,
     DisplayableUserResponse,
@@ -47,11 +48,13 @@ async def register(
             await session.commit()
             await session.refresh(user)
         except IntegrityError as e:
-            raise UserAlreadyExists(status_code=400, detail=f"Пользователь с логином `{register_data.login}` уже зарегистрирован") from e
+            raise UserAlreadyExists(
+                status_code=400,
+                detail=f"Пользователь с логином `{register_data.login}` уже зарегистрирован"
+            ) from e
 
     token_payload = {
-        "user_id": user.id,
-        "login": user.login,
+        "sub": user.login,
     }
     access_token = create_access_token(token_payload)
     refresh_token = create_refresh_token(token_payload)
@@ -88,8 +91,7 @@ async def login(
             raise IncorrectPassword(status_code=403, detail="Неверный пароль")
 
     token_payload = {
-        "user_id": user.id,
-        "login": user.login,
+        "sub": user.login,
     }
     access_token = create_access_token(token_payload)
     refresh_token = create_refresh_token(token_payload)
@@ -98,6 +100,18 @@ async def login(
         access_token=access_token,
         refresh_token=refresh_token,
     )
+
+
+@router.post("/refresh", response_model=AccessTokenResponse)
+@inject
+async def refresh_access_token(
+    user: DisplayableUserResponse = Depends(get_user_from_token)
+):
+    token_payload = {
+        "sub": user.login,
+    }
+    access_token = create_access_token(token_payload)
+    return {"access_token": access_token}
 
 
 @router.get("/me")

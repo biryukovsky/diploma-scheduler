@@ -19,6 +19,10 @@ class TokenData(BaseModel):
     refresh_token: str
 
 
+class AccessTokenResponse(BaseModel):
+    access_token: str
+
+
 class AuthResponse(BaseModel):
     user: DisplayableUserResponse
     token_data: TokenData
