@@ -7,3 +7,4 @@
 ### Done [x]
 - [x] JWT аутентификация для api
 - [x] Проверка JWT в ручках api
+- [x] refresh jwt
