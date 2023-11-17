@@ -8,8 +8,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 
 from scheduler.config import SecuritySettings
-from scheduler.db import Database
-from scheduler.models import User
+from scheduler.modules.security.repository import UserRepository
 from scheduler.modules.security.schemas import DisplayableUserResponse
 
 
@@ -81,21 +80,20 @@ def _get_token_payload(token: str, secret_key: str, algorithm: str) -> dict:
 async def get_user_from_token(
     token: str = Depends(oauth_token),
     settings: SecuritySettings = Depends(Provide["config.security"]),
-    db: Database = Depends(Provide["db"]),
+    user_repo: UserRepository = Depends(Provide["user_repo"]),
 ) -> DisplayableUserResponse:
     payload = _get_token_payload(token, settings["secret_key"], settings["algorithm"])
 
-    async with db.session() as session:
-        user = (await session.execute(select(User).where(User.login == payload["sub"]))).scalar()
+    user = await user_repo.get_user_by_login(payload["sub"])
 
-        if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found",
-            )
-
-        return DisplayableUserResponse(
-            login=user.login,
-            first_name=user.first_name,
-            last_name=user.last_name,
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
         )
+
+    return DisplayableUserResponse(
+        login=user.login,
+        first_name=user.first_name,
+        last_name=user.last_name,
+    )

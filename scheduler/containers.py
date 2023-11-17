@@ -4,6 +4,7 @@ from dependency_injector import providers
 from scheduler.db import Database
 from scheduler.modules.scheduler.repository import JobRepository
 from scheduler.modules.scheduler.services import SchedulerManager
+from scheduler.modules.security.repository import UserRepository
 
 
 class Container(DeclarativeContainer):
@@ -21,6 +22,11 @@ class Container(DeclarativeContainer):
 
     job_repo = providers.Factory(
         JobRepository,
+        db=db,
+    )
+
+    user_repo = providers.Factory(
+        UserRepository,
         db=db,
     )
 

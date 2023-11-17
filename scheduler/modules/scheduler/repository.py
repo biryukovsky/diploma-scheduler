@@ -2,6 +2,7 @@ from uuid import UUID
 import datetime as dt
 
 from sqlalchemy import select, delete
+from sqlalchemy.sql import Select
 from sqlalchemy.orm import contains_eager
 
 from scheduler.db import Database
@@ -63,7 +64,7 @@ class JobRepository:
                 params[k] = self._process_params(v)
         return params
 
-    def _get_select_job_query(self):
+    def _get_select_job_query(self) -> Select:
         return (
             select(Job)
             .join(Job.author)

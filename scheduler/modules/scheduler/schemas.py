@@ -42,6 +42,7 @@ class IntervalJobTrigger(BaseModel):
 
 class JobIn(BaseModel):
     job_name: str
+    description: str | None = None
     job_trigger: DateJobTrigger | IntervalJobTrigger = Field(..., discriminator="trigger_name")
     args: dict | None = Field(default_factory=dict)
 
@@ -56,6 +57,17 @@ class JobOut(BaseModel):
     id: str
     name: str
     next_run_time: dt.datetime
+    author: str
+    description: str | None = None
 
     class Config:
         orm_mode = True
+
+    @classmethod
+    def aggregate(cls, db_job, aps_job):
+        return cls(
+            id=db_job.id,
+            name=aps_job.name,
+            next_run_time=f"{db_job.author.first_name} {db_job.author.last_name}".strip() or db_job.author.login,
+            description=db_job.description,
+        )

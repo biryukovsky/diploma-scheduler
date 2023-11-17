@@ -171,12 +171,13 @@ async def render_index_page(
     jobs = await job_repo.get_jobs_by_apscheduler_ids(apscheduer_job_ids)
 
     renderable_jobs = []
-
+    # TODO: не зипать, так как может нарушиться порядок
     for ap_job, job in zip(apscheduler_jobs, jobs):
         renderable_jobs.append({
             "id": job.id,
             "name": JOB_REGISTRY[JobName(ap_job.name).value]["display_name"],
             "author": f"{job.author.first_name} {job.author.last_name}".strip() or job.author.login,
+            "description": job.description,
             "next_run_time": ap_job.next_run_time,
         })
 
