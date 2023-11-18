@@ -1,4 +1,3 @@
-import datetime as dt
 import pathlib
 import typing as t
 from uuid import UUID
@@ -179,12 +178,6 @@ async def delete_job(
     job_repo: JobRepository = Depends(Provide["job_repo"]),
     scheduler_manager: SchedulerManager = Depends(Provide["scheduler_manager"]),
 ):
-    """
-    TODO:
-        - select job
-        - delete job from scheduler by scheduler_job_id
-        - delete job from job table
-    """
     job = await job_repo.get_job_by_id(job_id)
     await job_repo.delete_job(job_id)
     scheduler_manager.delete_job(job.scheduler_job_id)

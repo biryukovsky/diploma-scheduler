@@ -27,4 +27,4 @@ class Job(Base):
     scheduler_job_id = sa.Column(sa.Text, nullable=False)
     params = sa.Column(JSONB, nullable=True)
 
-    author = relationship(User, backref="jobs")
+    author = relationship(User, backref="jobs", lazy="joined")

@@ -51,7 +51,7 @@ class SchedulerManager:
         trigger,
         job_id: str | None = None,
         replace_existing: bool | None = False,
-        **kwargs
+        params: dict | None = None,
     ) -> Job:
         job_item = JOB_REGISTRY.get(job_name)
         if not job_item:
@@ -61,7 +61,7 @@ class SchedulerManager:
             job_item["func"],
             trigger,
             name=job_name,
-            kwargs=kwargs,
+            kwargs=params,
             max_instances=1,
             id=job_id,
             replace_existing=replace_existing,

@@ -30,8 +30,7 @@ class JobRepository:
             await session.commit()
             await session.flush()
             await session.refresh(job)
-
-        return job
+            return job
 
     async def get_jobs_by_apscheduler_ids(self, ids: list[str]) -> list[Job]:
         query = self._get_select_job_query().where(Job.scheduler_job_id.in_(ids))

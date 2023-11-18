@@ -1,3 +1,4 @@
+from uuid import UUID
 from fastapi import APIRouter, Depends, Response
 from dependency_injector.wiring import inject, Provide
 
@@ -33,7 +34,7 @@ async def get_jobs(
 @router.get("/{job_id}", response_model=JobOut, dependencies=[Depends(get_user_from_token),])
 @inject
 async def get_job(
-    job_id: str,
+    job_id: UUID,
     scheduler_manager: SchedulerManager = Depends(Provide["scheduler_manager"]),
     job_repo: JobRepository = Depends(Provide["job_repo"]),
 ):
@@ -54,14 +55,14 @@ async def add_job(
     scheduler_job = scheduler_manager.add_job(
         job_name=job_in.job_name,
         trigger=job_in.job_trigger.to_apscheduler_trigger(),
-        **job_in.args,
+        params=job_in.params,
     )
-    db_user = user_repo.get_user_by_login(user.login)
+    db_user = await user_repo.get_user_by_login(user.login)
     db_job = await job_repo.create_job(
         author_id=db_user.id,
         scheduler_job_id=scheduler_job.id,
         description=job_in.description,
-        params=job_in.args,
+        params=job_in.params,
     )
 
     return JobOut.aggregate(db_job, scheduler_job)
@@ -70,7 +71,7 @@ async def add_job(
 @router.delete("/{job_id}", response_class=Response, dependencies=[Depends(get_user_from_token),])
 @inject
 async def delete_job(
-    job_id,
+    job_id: UUID,
     scheduler_manager: SchedulerManager = Depends(Provide["scheduler_manager"]),
     job_repo: JobRepository = Depends(Provide["job_repo"]),
 ):
