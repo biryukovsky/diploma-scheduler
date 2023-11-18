@@ -1,11 +1,9 @@
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from dependency_injector.wiring import inject, Provide
-from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
-from scheduler.db import Database
-from scheduler.models import User
+from scheduler.modules.security.repository import UserRepository
 from scheduler.modules.security.schemas import (
     AccessTokenResponse,
     RegisterRequest,
@@ -34,24 +32,20 @@ router = APIRouter(tags=["auth"])
 @inject
 async def register(
     register_data: RegisterRequest,
-    db: Database = Depends(Provide["db"])
+    user_repo: UserRepository = Depends(Provide["user_repo"]),
 ):
-    async with db.session() as session:
-        user = User(
+    try:
+        user = await user_repo.create(
             login=register_data.login,
             password=hash_password(register_data.password),
             first_name=register_data.first_name,
             last_name=register_data.last_name,
         )
-        session.add(user)
-        try:
-            await session.commit()
-            await session.refresh(user)
-        except IntegrityError as e:
-            raise UserAlreadyExists(
-                status_code=400,
-                detail=f"Пользователь с логином `{register_data.login}` уже зарегистрирован"
-            ) from e
+    except IntegrityError as e:
+        raise UserAlreadyExists(
+            status_code=400,
+            detail=f"Пользователь с логином `{register_data.login}` уже зарегистрирован"
+        ) from e
 
     token_payload = {
         "sub": user.login,
@@ -76,19 +70,17 @@ async def register(
 @inject
 async def login(
     login_data: OAuth2PasswordRequestForm = Depends(),
-    db: Database = Depends(Provide["db"])
+    user_repo: UserRepository = Depends(Provide["user_repo"]),
 ):
-    async with db.session() as session:
-        query = select(User).where(User.login == login_data.username)
-        user = (await session.execute(query)).scalar()
-        if not user:
-            raise UserNotFound(
-                status_code=404,
-                detail=f"Пользователь `{login_data.username}` не существует"
-            )
+    user = await user_repo.get_user_by_login(login_data.username)
+    if not user:
+        raise UserNotFound(
+            status_code=404,
+            detail=f"Пользователь `{login_data.username}` не существует"
+        )
 
-        if not verify_password(login_data.password, user.password):
-            raise IncorrectPassword(status_code=403, detail="Неверный пароль")
+    if not verify_password(login_data.password, user.password):
+        raise IncorrectPassword(status_code=403, detail="Неверный пароль")
 
     token_payload = {
         "sub": user.login,

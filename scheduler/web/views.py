@@ -11,11 +11,11 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from scheduler.db import Database
-from scheduler.models import User
 from scheduler.modules.scheduler.repository import JobRepository
 from scheduler.modules.scheduler.services import SchedulerManager
 from scheduler.modules.scheduler.job_registry import JOB_REGISTRY, JobName
 from scheduler.modules.scheduler.schemas import DateJobTrigger, JobOut
+from scheduler.modules.security.repository import UserRepository
 from scheduler.web.schemas import CreateJobRequest
 from scheduler.web.dependencies.auth import auth_required, prevent_logged_in
 from scheduler.web.utils.flash import get_flashed_messages, flash, FlashCategory
@@ -63,7 +63,7 @@ async def register(
     password2: t.Annotated[str, Form()],
     first_name: t.Annotated[str, Form()],
     last_name: t.Annotated[str, Form()],
-    db: Database = Depends(Provide["db"])
+    user_repo: UserRepository = Depends(Provide["db"]),
 ):
     """
     - check user not in db
@@ -77,22 +77,18 @@ async def register(
         flash(request, "Пароли не совпадают", FlashCategory.danger)
         return RedirectResponse("/register")
 
-    async with db.session() as session:
-        user = User(
+    try:
+        user = await user_repo.create(
             login=login,
             password=hash_password(password),
             first_name=first_name,
             last_name=last_name,
         )
-        session.add(user)
-        try:
-            await session.commit()
-            await session.refresh(user)
-        except IntegrityError:
-            flash(request,
-                  "Такой пользователь уже зарегистрирован",
-                  FlashCategory.danger)
-            return RedirectResponse("/register")
+    except IntegrityError:
+        flash(request,
+              "Такой пользователь уже зарегистрирован",
+              FlashCategory.danger)
+        return RedirectResponse("/register")
 
     add_user_to_session(request, user)
 
@@ -116,7 +112,7 @@ async def login_user(
     request: Request,
     login: t.Annotated[str, Form()],
     password: t.Annotated[str, Form()],
-    db: Database = Depends(Provide["db"])
+    user_repo: UserRepository = Depends(Provide["user_repo"]),
 ):
     """
     - search in db by login
@@ -125,18 +121,16 @@ async def login_user(
     - redirect to index
     """
 
-    async with db.session() as session:
-        query = select(User).where(User.login == login)
-        user = (await session.execute(query)).scalar()
-        if not user:
-            flash(request, "Такого пользоваотеля не существует", FlashCategory.danger)
-            return RedirectResponse("/login", status_code=302)
+    user = await user_repo.get_user_by_login(login)
+    if not user:
+        flash(request, "Такого пользоваотеля не существует", FlashCategory.danger)
+        return RedirectResponse("/login", status_code=302)
 
-        if not verify_password(password, user.password):
-            flash(request, "Неверный пароль", FlashCategory.danger)
-            return RedirectResponse("/login", status_code=302)
+    if not verify_password(password, user.password):
+        flash(request, "Неверный пароль", FlashCategory.danger)
+        return RedirectResponse("/login", status_code=302)
 
-        add_user_to_session(request, user)
+    add_user_to_session(request, user)
 
     return RedirectResponse("/", status_code=302)
 
@@ -260,7 +254,7 @@ async def get_job_params(job_name: JobName):
             "name": param["name"],
             "display_name": param["display_name"],
             "type": type_map.get(param["type"], "text"),
-            "is_list": "[]" in param["name"],
+            "is_list": isinstance(param["type"], list),
         }
         response.append(param_data)
 

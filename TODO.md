@@ -3,7 +3,6 @@
 ### Todo
 - [ ] Реализация джобы notify_students
 - [ ] Web: Страница джобы
-- [ ] Misc: Использовать UserRepository вместо прямых запросов в бд
 - [ ] Research: Ивенты апскедулера (EVENT_JOB_EXECUTED) [ссылка](https://apscheduler.readthedocs.io/en/3.x/modules/events.html#event-codes)
 
 ### Done [x]
@@ -17,3 +16,4 @@
 - [x] API: Полная схема ответа одной джобы
 - [x] Web: поправить выдачу списка джобов (убрать zip)
 - [x] API: Валидация аргументов джобы
+- [x] Misc: Использовать UserRepository вместо прямых запросов в бд
