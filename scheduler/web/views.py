@@ -16,7 +16,7 @@ from scheduler.models import User
 from scheduler.modules.scheduler.repository import JobRepository
 from scheduler.modules.scheduler.services import SchedulerManager
 from scheduler.modules.scheduler.job_registry import JOB_REGISTRY, JobName
-from scheduler.modules.scheduler.schemas import DateJobTrigger
+from scheduler.modules.scheduler.schemas import DateJobTrigger, JobOut
 from scheduler.web.schemas import CreateJobRequest
 from scheduler.web.dependencies.auth import auth_required, prevent_logged_in
 from scheduler.web.utils.flash import get_flashed_messages, flash, FlashCategory
@@ -157,29 +157,14 @@ async def render_index_page(
     job_repo: JobRepository = Depends(Provide["job_repo"]),
     scheduler_manager: SchedulerManager = Depends(Provide["scheduler_manager"]),
 ):
-    jobs = [
-        {
-            "id": 1,
-            "name": "notify_students",
-            "author": "Илья Бирюков",
-            "next_run_time": dt.datetime(year=2023, month=10, day=10, hour=10)
-        }
-    ]
-    apscheduler_jobs = scheduler_manager.get_jobs()
-    apscheduer_job_ids = [j.id for j in apscheduler_jobs]
-
-    jobs = await job_repo.get_jobs_by_apscheduler_ids(apscheduer_job_ids)
+    aps_jobs = scheduler_manager.get_jobs()
+    aps_jobs_by_id = {j.id: j for j in aps_jobs}
+    db_jobs = await job_repo.get_jobs_by_apscheduler_ids(list(aps_jobs_by_id))
 
     renderable_jobs = []
-    # TODO: не зипать, так как может нарушиться порядок
-    for ap_job, job in zip(apscheduler_jobs, jobs):
-        renderable_jobs.append({
-            "id": job.id,
-            "name": JOB_REGISTRY[JobName(ap_job.name).value]["display_name"],
-            "author": f"{job.author.first_name} {job.author.last_name}".strip() or job.author.login,
-            "description": job.description,
-            "next_run_time": ap_job.next_run_time,
-        })
+    for db_job in db_jobs:
+        job = JobOut.aggregate(db_job, aps_jobs_by_id[db_job.scheduler_job_id])
+        renderable_jobs.append(job.dict())
 
     return templates.TemplateResponse("index.html", context={
         "request": request,

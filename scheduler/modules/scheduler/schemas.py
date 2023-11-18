@@ -68,6 +68,7 @@ class JobOut(BaseModel):
         return cls(
             id=db_job.id,
             name=aps_job.name,
-            next_run_time=f"{db_job.author.first_name} {db_job.author.last_name}".strip() or db_job.author.login,
+            next_run_time=aps_job.next_run_time,
+            author=f"{db_job.author.first_name} {db_job.author.last_name}".strip() or db_job.author.login,
             description=db_job.description,
         )
