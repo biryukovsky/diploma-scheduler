@@ -1,7 +1,10 @@
+import logging
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from starlette.middleware import Middleware
 from starlette.middleware.sessions import SessionMiddleware
+from sqlalchemy.exc import NoResultFound
 
 import scheduler
 from scheduler.containers import Container
@@ -10,6 +13,9 @@ from scheduler.web.views import router as web_router
 from scheduler.web.exception_handlers import apply_exception_handlers as apply_web_exception_handlers
 from scheduler.config import Settings
 from scheduler.utils.exception import SchedulerException
+
+
+logger = logging.getLogger(__name__)
 
 
 def create_app():
@@ -37,6 +43,14 @@ def create_app():
         return JSONResponse(
             status_code=exc.status_code,
             content={"error": exc.__class__.__name__, "message": str(exc)}
+        )
+
+    @app.exception_handler(NoResultFound)
+    async def handle_no_result_found(request: Request, exc: NoResultFound):
+        logger.exception(exc)
+        return JSONResponse(
+            status_code=404,
+            content={"error": "Resource not found"},
         )
 
     @app.on_event("startup")
