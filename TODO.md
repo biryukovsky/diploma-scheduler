@@ -1,8 +1,13 @@
 # Планировщик отложенных задач
 
 ### Todo
-- [ ] Реализация джобы notify_students
+- [ ] Переименовать notify_students
+- [ ] Интеграция с moodle
+    - [ ] Создание курсов
+    - [ ] Уведомления
+    - [ ] Дедлайн для выполнения дз
 - [ ] Web: Страница джобы
+- [ ] Подумать как поддержать списковые аргументы без квадратных скобок
 - [ ] Research: Ивенты апскедулера (EVENT_JOB_EXECUTED) [ссылка](https://apscheduler.readthedocs.io/en/3.x/modules/events.html#event-codes)
 
 ### Done [x]
@@ -17,3 +22,6 @@
 - [x] Web: поправить выдачу списка джобов (убрать zip)
 - [x] API: Валидация аргументов джобы
 - [x] Misc: Использовать UserRepository вместо прямых запросов в бд
+- [x] mailpit в docker-compose
+- [x] moodle в docker-compose
+- [x] Реализация джобы notify_students

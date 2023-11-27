@@ -7,10 +7,8 @@ from fastapi.datastructures import FormData
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from dependency_injector.wiring import inject, Provide
-from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
-from scheduler.db import Database
 from scheduler.modules.scheduler.repository import JobRepository
 from scheduler.modules.scheduler.services import SchedulerManager
 from scheduler.modules.scheduler.job_registry import JOB_REGISTRY, JobName
@@ -229,7 +227,7 @@ async def create_job(
             trigger_name="date",
             run_date=request_data.next_run_time
         ).to_apscheduler_trigger(),
-        **params,
+        params=params,
     )
     await job_repo.create_job(
         author_id=request.session["user"]["id"],

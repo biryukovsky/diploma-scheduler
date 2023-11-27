@@ -1,23 +1,25 @@
-from pydantic import BaseSettings, Field
+from pydantic import BaseSettings, Field, EmailStr
 
 
 class DatabaseSettings(BaseSettings):
-    user: str = Field(env="DB_USER")
-    password: str = Field(env="DB_PASSWORD")
-    host: str = Field(env="DB_HOST")
-    port: str = Field(env="DB_PORT")
-    db_name: str = Field(env="DB_NAME")
+    user: str
+    password: str
+    host: str
+    port: str
+    name: str
 
     class Config:
         env_file = ".env"
+        env_prefix = "DB_"
 
 
 class SchedulerSettings(BaseSettings):
-    schema_name: str = Field(env="SCHEDULER_SCHEMA")
-    table_name: str = Field(env="SCHEDULER_TABLE")
+    db_schema: str
+    table: str
 
     class Config:
         env_file = ".env"
+        env_prefix = "SCHEDULER_"
 
 
 class SecuritySettings(BaseSettings):
@@ -30,10 +32,21 @@ class SecuritySettings(BaseSettings):
         env_file = ".env"
 
 
+class MailSettings(BaseSettings):
+    host: str
+    port: str
+    from_addr: EmailStr
+
+    class Config:
+        env_file = ".env"
+        env_prefix = "MAIL_"
+
+
 class Settings(BaseSettings):
     db: DatabaseSettings = DatabaseSettings()
     scheduler: SchedulerSettings = SchedulerSettings()
     security: SecuritySettings = SecuritySettings()
+    mail: MailSettings = MailSettings()
 
     class Config:
         env_file = ".env"

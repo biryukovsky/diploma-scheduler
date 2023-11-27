@@ -17,7 +17,7 @@ class Container(DeclarativeContainer):
         port=config.db.port,
         user=config.db.user,
         password=config.db.password,
-        db_name=config.db.db_name,
+        db_name=config.db.name,
     )
 
     job_repo = providers.Factory(
@@ -33,6 +33,6 @@ class Container(DeclarativeContainer):
     scheduler_manager = providers.Singleton(
         SchedulerManager,
         db=db,
-        scheduler_schema=config.scheduler.schema_name,
-        scheduler_table=config.scheduler.table_name,
+        scheduler_schema=config.scheduler.db_schema,
+        scheduler_table=config.scheduler.table,
     )

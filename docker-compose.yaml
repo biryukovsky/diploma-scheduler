@@ -29,6 +29,55 @@ services:
     networks:
       - scheduler
 
+  mailpit:
+    image: axllent/mailpit
+    restart: always
+    volumes:
+      - ./mailpit:/data
+    ports:
+      - 8025:8025
+      - 1025:1025
+    environment:
+      MP_MAX_MESSAGES: 5000
+      MP_DATA_FILE: /data/mailpit.db
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    networks:
+      - scheduler
+
+  mariadb:
+    image: docker.io/bitnami/mariadb:11.1
+    environment:
+      # ALLOW_EMPTY_PASSWORD is recommended only for development.
+      - ALLOW_EMPTY_PASSWORD=yes
+      - MARIADB_USER=bn_moodle
+      - MARIADB_DATABASE=bitnami_moodle
+      - MARIADB_CHARACTER_SET=utf8mb4
+      - MARIADB_COLLATE=utf8mb4_unicode_ci
+    volumes:
+      - 'mariadb_data:/bitnami/mariadb'
+    networks:
+      - scheduler
+
+  moodle:
+    image: docker.io/bitnami/moodle:4.3
+    ports:
+      - '8888:8080'
+    environment:
+      - MOODLE_DATABASE_HOST=mariadb
+      - MOODLE_DATABASE_PORT_NUMBER=3306
+      - MOODLE_DATABASE_USER=bn_moodle
+      - MOODLE_DATABASE_NAME=bitnami_moodle
+      # ALLOW_EMPTY_PASSWORD is recommended only for development.
+      - ALLOW_EMPTY_PASSWORD=yes
+    volumes:
+      - 'moodle_data:/bitnami/moodle'
+      - 'moodledata_data:/bitnami/moodledata'
+    depends_on:
+      - mariadb
+    networks:
+      - scheduler
+
 networks:
   scheduler:
     name: scheduler
@@ -36,3 +85,6 @@ networks:
 
 volumes:
   scheduler-db:
+  mariadb_data:
+  moodle_data:
+  moodledata_data:
