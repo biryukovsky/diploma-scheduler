@@ -1,7 +1,6 @@
 # Планировщик отложенных задач
 
 ### Todo
-- [ ] Переименовать notify_students
 - [ ] Интеграция с moodle
     - [ ] Создание курсов
     - [ ] Уведомления
@@ -25,3 +24,4 @@
 - [x] mailpit в docker-compose
 - [x] moodle в docker-compose
 - [x] Реализация джобы notify_students
+- [x] Переименовать notify_students

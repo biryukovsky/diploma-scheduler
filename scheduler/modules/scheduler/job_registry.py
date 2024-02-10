@@ -20,11 +20,11 @@ class JobInfoDict(t.TypedDict):
 
 
 class JobName(Enum):
-    notify_students = "notify_students"  # TODO: rename
+    send_email = "send_email"
 
 
 JOB_REGISTRY: dict[JobName, JobInfoDict] = {
-    JobName.notify_students.value: {
+    JobName.send_email.value: {
         "display_name": "Уведомление студентам",
         "func": send_email,
         "params": [
