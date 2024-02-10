@@ -48,34 +48,42 @@ const loadParams = async (jobName) => {
   paramsContainer.innerHTML = "";
 
   params.forEach(param => {
-    createControl(
+    let newControl = createControl(
       paramsContainer,
       param.display_name,
       param.type,
       param.name,
     );
+    paramsContainer.appendChild(newControl);
 
-    if (param.is_list && paramsContainer.querySelector(".addMore") === null) {
+    if (param.is_list && newControl.querySelector(".addMore") === null) {
+      const newParamData = { ...param };
       const btn = document.createElement("button");
       btn.textContent = "Добавить еще"
       btn.classList.add("btn", "btn-link", "addMode", "pt-0", "ps-0");
       btn.setAttribute("type", "button");
-      btn.onclick = (el, event) => {
+      btn.setAttribute("data-param", JSON.stringify(newParamData));
+      btn.onclick = (event) => {
         // destroy button itself
-        paramsContainer.removeChild(btn);
+        newControl.removeChild(btn);
+        const paramData = JSON.parse(btn.getAttribute("data-param"));
 
         // create new control
-        createControl(
+        const oldControl = newControl;
+        const oneMoreControl = createControl(
           paramsContainer,
-          param.display_name,
-          param.type,
-          param.name,
+          paramData.display_name,
+          paramData.type,
+          paramData.name,
         );
 
+        oldControl.after(oneMoreControl);
+
         // append button to the end
-        paramsContainer.appendChild(btn);
+        oneMoreControl.appendChild(btn);
+        newControl = oneMoreControl;
       }
-      paramsContainer.appendChild(btn);
+      newControl.appendChild(btn);
     }
   });
 }
@@ -95,7 +103,9 @@ const createControl = (container, displayName, type, name) => {
   inputContainer.appendChild(label);
   inputContainer.appendChild(input);
 
-  container.appendChild(inputContainer);
+  {# container.appendChild(inputContainer); #}
+
+  return inputContainer;
 }
 
 const jobNameElem = document.getElementById("jobName");

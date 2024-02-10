@@ -23,7 +23,7 @@
       {% for job in jobs %}
         <tr>
           <th scope="row">{{ job.id }}</th>
-          <td>{{ job.name }}</td>
+          <td>{{ job.display_name }}</td>
           <td>{{ job.next_run_time.strftime("%d.%m.%Y %H:%M:%S") }}</td>
           <td>{{ job.author }}</td>
           <td>

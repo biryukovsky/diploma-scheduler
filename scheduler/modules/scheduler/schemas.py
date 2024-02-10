@@ -86,6 +86,7 @@ class JobIn(BaseModel):
 class JobOut(BaseModel):
     id: str
     name: str
+    display_name: str
     next_run_time: dt.datetime
     author: str
     description: str | None = None
@@ -98,6 +99,7 @@ class JobOut(BaseModel):
         return cls(
             id=db_job.id,
             name=aps_job.name,
+            display_name=JOB_REGISTRY[aps_job.name]["display_name"],
             next_run_time=aps_job.next_run_time,
             author=f"{db_job.author.first_name} {db_job.author.last_name}".strip() or db_job.author.login,
             description=db_job.description,

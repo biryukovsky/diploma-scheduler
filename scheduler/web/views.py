@@ -252,7 +252,7 @@ async def get_job_params(job_name: JobName):
             "name": param["name"],
             "display_name": param["display_name"],
             "type": type_map.get(param["type"], "text"),
-            "is_list": isinstance(param["type"], list),
+            "is_list": param["type"].__name__ == "list",
         }
         response.append(param_data)
 
